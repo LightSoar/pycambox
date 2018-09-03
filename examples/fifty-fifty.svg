@@ -1,0 +1,18 @@
+<svg id="svg2" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="50" width="50" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 302.5 302.5">
+<g id="layer1">
+<g id="box" stroke="#000000" stroke-width="5" fill="none">
+<rect id="axes" stroke-opacity="1.0" height="297.50" width="297.50" y="2.5" x="2.5"></rect>
+<g id="gridlines">
+<path id="vgridline-0" d="m100.000 0.0v300"></path>
+
+<path id="vgridline-1" d="m200.000 0.0v300"></path>
+<path id="hgridline-0" d="m0.0 100.000h300"></path>
+
+<path id="hgridline-1" d="m0.0 200.000h300"></path>
+</g>
+<g id="points">
+<circle id="0" cx="150.000" cy="150.000" r="15" fill="#000000"></circle>
+</g>
+</g>
+</g>
+</svg>
