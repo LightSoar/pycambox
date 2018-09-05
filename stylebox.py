@@ -59,9 +59,10 @@ class StyleBox(Scatter):
 
 class StyleBoxBuilder(metaclass=abc.ABCMeta):
     
-    @abc.abstractmethod
-    def build(self):
-        pass
+    def __init__(self, x_domain, y_domain, size, color):
+        self.size = size
+        self.color = color
+        self.stylebox = StyleBox(x_domain, y_domain)
     
     def grid(self, nx: int, ny: int):
         # SVG box size is always 300
@@ -72,6 +73,10 @@ class StyleBoxBuilder(metaclass=abc.ABCMeta):
         # SVG box size is always 300
         self.stylebox.add_point(x, y)
         return self
+    
+    @abc.abstractmethod
+    def build(self):
+        pass
 
 
 class SVGStyleBoxBuilder(StyleBoxBuilder):
@@ -81,11 +86,6 @@ class SVGStyleBoxBuilder(StyleBoxBuilder):
     
     CIRC_TEMPLATE = '<circle id="{pid}" cx="{x:.3f}" cy="{y:.3f}" r="15" fill="{color}"/>\n' # Circle radius is always 15
     
-    
-    def __init__(self, x_domain, y_domain, size, color):
-        self.size = size
-        self.color = color
-        self.stylebox = StyleBox(x_domain, y_domain)
     
     def x_to_box_coords(self, x):
         return rescale(x, self.stylebox.x_lo, self.stylebox.x_hi, 0.0, 300.0)
@@ -122,6 +122,42 @@ class SVGStyleBoxBuilder(StyleBoxBuilder):
         return self.svg
 
 
+class HTMLStyleBoxBuilder(StyleBoxBuilder):
+
+    HTML_TEMPLATE = """
+    <div class="stylebox" style="position: relative; width: 50px; height: 50px;">
+        <table class="grid" style="position: absolute; border-collapse: collapse; border-color:#000000; overflow:hidden; width:50px; height:50px; border: 1px;">
+            <tr>
+                <td class="cell" style="border-style:solid; padding: 0px; margin: 0px;"></td>
+                <td class="cell" style="border-style:solid; padding: 0px; margin: 0px;"></td>
+                <td class="cell" style="border-style:solid; padding: 0px; margin: 0px;"></td>
+            </tr>
+            <tr>
+                <td class="cell" style="border-style:solid; padding: 0px; margin: 0px;"></td>
+                <td class="cell" style="border-style:solid; padding: 0px; margin: 0px;"></td>
+                <td class="cell" style="border-style:solid; padding: 0px; margin: 0px;"></td>
+            </tr>
+            <tr>
+                <td class="cell" style="border-style:solid; padding: 0px; margin: 0px;"></td>
+                <td class="cell" style="border-style:solid; padding: 0px; margin: 0px;"></td>
+                <td class="cell" style="border-style:solid; padding: 0px; margin: 0px;"></td>
+            </tr>
+        </table>
+        <div class="circle" style="position: absolute; width: 10px; height: 10px; background-color: black; border-radius: 50%; left: {x}%; top: {y}%; transform: translate(-50%, -50%);"/>
+    <div>
+"""
+
+    def x_to_box_coords(self, x):
+        return rescale(x, self.stylebox.x_lo, self.stylebox.x_hi, 0.0, 100.0)
+    
+    def y_to_box_coords(self, y):
+        return rescale(y, self.stylebox.y_lo, self.stylebox.y_hi, 0.0, 100.0)
+    
+    def build(self):
+        # TODO make use of all points
+        return self.HTML_TEMPLATE.format(x=self.x_to_box_coords(self.stylebox.x[-1]), y=self.y_to_box_coords(self.stylebox.y[-1]))
+
+
 class PNGStyleBoxBuilder(StyleBoxBuilder):
     pass
 
@@ -129,4 +165,5 @@ class PNGStyleBoxBuilder(StyleBoxBuilder):
 class StyleBoxBuilderDirector:
     pass
 
-
+#with open("/tmp/direct.svg", "w") as svg_file:
+#    svg_file.write(SVGStyleBoxBuilder([0, 1], [0, 1], size=50, color="#000000").grid(2,2).point(0.5,0.5).point(0.5,0.4).point(0.4,0.5).build())
