@@ -14,7 +14,9 @@ with open("/tmp/stylebox.svg", "w") as svg_file:
 ```
 
 ### As a webservice
-Run `./stylebox-webservice.py` and navigate to http://127.0.0.1:5000/0.5/0/1/0.5/0/1.
+Run `./stylebox-webservice.py` and navigate to:
+* http://127.0.0.1:5000/svg/0.5/0/1/0.5/0/1, for SVG output
+* http://127.0.0.1:5000/html/0.5/0/1/0.5/0/1, for HTML output
 
 ### Result
 ![pystylebox example](/examples/fifty-fifty.svg)
