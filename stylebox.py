@@ -3,6 +3,7 @@
 import abc # abstract base class
 import numpy as np
 
+from overrides import overrides
 
 def rescale(x, from_lo, from_hi, to_lo, to_hi):
     # y = yi + (yf-yi)/(xf-xi)*(x-xi)
@@ -43,7 +44,9 @@ class Scatter:
 
 class StyleBox(Scatter):
     
-    def set_gridlines(self, nx: int, ny: int):
+    def set_gridlines(self, nx:int, ny:int=None):
+        
+        ny = nx if ny is None else ny
         
         # make sure `nx`, `ny` are non-negative
         nx, ny = max(0, nx), max(0, ny)
@@ -59,7 +62,7 @@ class StyleBox(Scatter):
 
 class StyleBoxBuilder(metaclass=abc.ABCMeta):
     
-    def __init__(self, x_domain, y_domain, size, color):
+    def __init__(self, x_domain, y_domain, size, color='None'):
         self.size = size
         self.color = color
         self.stylebox = StyleBox(x_domain, y_domain)
@@ -162,8 +165,80 @@ class PNGStyleBoxBuilder(StyleBoxBuilder):
     pass
 
 
+class ASCIIStyleBoxBuilder(StyleBoxBuilder):
+
+    def x_to_box_coords(self, x):
+        return round(rescale(x, self.stylebox.x_lo, self.stylebox.x_hi, 0.0, self.size-1))
+    
+    def y_to_box_coords(self, y):
+        return round(rescale(y, self.stylebox.y_lo, self.stylebox.y_hi, 0.0, self.size-1))
+    
+    @overrides
+    def grid(self, nx:int, ny:int=None):
+        # N gridlines are possible only if size-1 is divisible by N+1.
+        # e.g. for 1 gridline, (size-1) must be divisible by 2
+        #      for 2 gridlines, (size-1) must be divisible by 3
+        
+        nx = nx if ((self.size-1) % (nx+1))==0 else 0
+        if ny is None:
+            ny = nx
+        else:
+            ny = ny if ((self.size-1) % (ny+1))==0 else 0
+        
+        # make sure `nx`, `ny` are non-negative
+        nx, ny = max(0, nx), max(0, ny)
+        
+        xi = np.arange(0,self.size,self.size//(nx+1))[1:-1]
+        yi = np.arange(0,self.size,self.size//(ny+1))[1:-1]
+        
+        self.stylebox.grid_xi, self.stylebox.grid_yi = list(xi), list(yi)
+        
+        return self
+
+    def build(self):
+    
+        # Generate the "wireframe"
+        top = ['┌'] + ['─']*(self.size-2) + ['┐']
+        sides = ['│'] + [' ']*(self.size-2) + ['│']
+        bottom = ['└'] + ['─']*(self.size-2) + ['┘']
+        
+        box = [sides.copy() for i in range(self.size-2)]
+        box.insert(0, top)
+        box.append(bottom)
+        
+        # Add gridlines
+        for ix in self.stylebox.grid_xi:
+            box[0][ix] = '┬' # top
+            box[-1][ix] = '┴' # bottom
+            
+            for iy in range(1, self.size-1):
+                box[iy][ix] = '│'
+        
+        for iy in self.stylebox.grid_yi:
+            box[iy][0] = '├'
+            box[iy][-1] = '┤'
+            
+            for ix in range(1, self.size-1):
+                box[iy][ix] = '─' #if ix not in self.stylebox.grid_xi else '┼'
+        
+        for ix in self.stylebox.grid_xi:
+            for iy in self.stylebox.grid_yi:
+                box[iy][ix] = '┼'
+            
+        
+        # Add point
+        if len(self.stylebox.x):
+            ix = self.x_to_box_coords(self.stylebox.x[-1])
+            iy = self.y_to_box_coords(self.stylebox.y[-1])
+            box[iy][ix] = '*'
+        
+        return '\n'.join([''.join(line) for line in box])
+        
+
 class StyleBoxBuilderDirector:
     pass
 
 #with open("/tmp/direct.svg", "w") as svg_file:
 #    svg_file.write(SVGStyleBoxBuilder([0, 1], [0, 1], size=50, color="#000000").grid(2,2).point(0.5,0.5).point(0.5,0.4).point(0.4,0.5).build())
+
+#print(ASCIIStyleBoxBuilder([0,1],[0,1], size=7).grid(1).point(0.25,0.75).build())
